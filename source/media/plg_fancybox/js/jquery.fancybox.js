@@ -6,7 +6,7 @@
  * Examples at http://fancyapps.com/fancybox/
  * License: www.fancyapps.com/fancybox/#license
  *
- * Copyright 2012 Janis Skarnelis - janis@fancyapps.com
+ * Copyright 2015 Janis Skarnelis - janis@fancyapps.com
  *
  */
 
