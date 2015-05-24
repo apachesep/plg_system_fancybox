@@ -2,364 +2,407 @@
 /**
  * Joomla! System plugin - jQuery Fancybox
  *
- * @author Yireo (info@yireo.com)
+ * @author    Yireo (info@yireo.com)
  * @copyright Copyright 2015 Yireo.com. All rights reserved
- * @license GNU Public License
- * @link http://www.yireo.com
+ * @license   GNU Public License
+ * @link      http://www.yireo.com
  */
 
 // Check to ensure this file is included in Joomla!
-defined('_JEXEC') or die( 'Restricted access' );
+defined('_JEXEC') or die('Restricted access');
 
 // Import the parent class
-jimport( 'joomla.plugin.plugin' );
+jimport('joomla.plugin.plugin');
 
 /**
  * Fancybox System Plugin
  */
 class plgSystemFancybox extends JPlugin
 {
-    /**
-     * Event onAfterRender
-     *
-     * @access public
-     * @param null
-     * @return null
-     */
-    public function onAfterDispatch()
-    {
-        // Dot not load if this is not the right document-class
-        $document = JFactory::getDocument();
-        if($document->getType() != 'html') {
-            return false;
-        }
+	/**
+	 * @var JApplication
+	 */
+	protected $app;
 
-        // Perform actions on the frontend
-        $application = JFactory::getApplication();
-        if($application->isSite()) {
+	/**
+	 * Event onAfterRender
+	 */
+	public function onAfterDispatch()
+	{
+		// Dot not load if this is not the right document-class
+		$document = JFactory::getDocument();
+		
+		if ($document->getType() != 'html')
+		{
+			return false;
+		}
 
-            $elements = $this->getElements();
-            if(empty($elements)) return null;
+		// Perform actions on the frontend
+		if ($this->app->isSite())
+		{
+			$elements = $this->getElements();
+			
+			if (empty($elements))
+			{
+				return false;
+			}
 
-            // Get and parse the components from the plugin parameters
-            $components = $this->getParams()->get('exclude_components');
-            if(empty($components)) {
-                $components= array();
-            } elseif(!is_array($components)) {
-                $components = array($components);
-            }
+			// Get and parse the components from the plugin parameters
+			$components = $this->params->get('exclude_components');
+			
+			if (empty($components))
+			{
+				$components = array();
+			}
+			elseif (!is_array($components))
+			{
+				$components = array($components);
+			}
 
-            // Don't do anything if the current component is excluded
-            if(in_array(JRequest::getCmd('option'), $components)) {
-                return;
-            }
+			// Don't do anything if the current component is excluded
+			if (in_array($this->app->input->getCmd('option'), $components))
+			{
+				return false;
+			}
 
-            $js_folder = 'media/plg_fancybox/js/';
-            $transition = $this->getParams()->get('transition', '');
+			$js_folder = 'media/plg_fancybox/js/';
+			$transition = $this->params->get('transition', '');
 
-            $this->loadStylesheet('jquery.fancybox.css', $this->getParams()->get('load_css', 1));
-            $this->jquery();
+			$this->loadStylesheet('jquery.fancybox.css', $this->params->get('load_css', 1));
+			$this->jquery();
 
-            // Load CSS and JavaScript
-            $this->loadStylesheet('jquery.fancybox-buttons.css', $this->getParams()->get('load_buttons', 0));
-            $this->loadStylesheet('jquery.fancybox-thumbs.css', $this->getParams()->get('load_thumbs', 0));
-            $this->loadScript('jquery.fancybox.pack.js', $this->getParams()->get('load_fancybox', 1));
-            $this->loadScript('jquery.mousewheel-3.0.6.pack.js', $this->getParams()->get('load_mousewheel', 0));
-            $this->loadScript('jquery.fancybox-buttons.js', $this->getParams()->get('load_buttons', 0));
-            $this->loadScript('jquery.fancybox-media.js', $this->getParams()->get('load_media', 0));
-            $this->loadScript('jquery.fancybox-thumbs.js', $this->getParams()->get('load_thumbs', 0));
+			// Load CSS and JavaScript
+			$this->loadStylesheet('jquery.fancybox-buttons.css', $this->params->get('load_buttons', 0));
+			$this->loadStylesheet('jquery.fancybox-thumbs.css', $this->params->get('load_thumbs', 0));
+			$this->loadScript('jquery.fancybox.pack.js', $this->params->get('load_fancybox', 1));
+			$this->loadScript('jquery.mousewheel-3.0.6.pack.js', $this->params->get('load_mousewheel', 0));
+			$this->loadScript('jquery.fancybox-buttons.js', $this->params->get('load_buttons', 0));
+			$this->loadScript('jquery.fancybox-media.js', $this->params->get('load_media', 0));
+			$this->loadScript('jquery.fancybox-thumbs.js', $this->params->get('load_thumbs', 0));
 
-            // Construct basic options
-            $options = array(
-            );
+			// Construct basic options
+			$options = array();
 
-            // Enable mouse-wheel
-            $options['mouseWheel'] = true;
-            if($this->getParams()->get('enable_mousewheel', 0) == 0) {
-                $options['mouseWheel'] = false;
-            }
+			// Enable mouse-wheel
+			$options['mouseWheel'] = true;
+			
+			if ($this->params->get('enable_mousewheel', 0) == 0)
+			{
+				$options['mouseWheel'] = false;
+			}
 
-            // Determine the content-type
-            $content_type = $this->getParams()->get('content_type');
-            if(!empty($content_type)) {
-                $options['type'] = $content_type;
-            }
+			// Determine the content-type
+			$content_type = $this->params->get('content_type');
+			
+			if (!empty($content_type))
+			{
+				$options['type'] = $content_type;
+			}
 
-            if(!in_array($transition, array('', 'fade', 'elastic', 'none'))) {
-            
-                $this->loadScript('jquery.easing-1.3.pack.js', $this->getParams()->get('load_easing', 1));
+			if (!in_array($transition, array('', 'fade', 'elastic', 'none')))
+			{
+				$this->loadScript('jquery.easing-1.3.pack.js', $this->params->get('load_easing', 1));
 
-                if(in_array($transition, array('swing', 'linear'))) {
-                    $options['openEasing'] = $transition;
-                    $options['closeEasing'] = $transition;
-                } else {
-                    $options['openEasing'] = 'easeInOut'.ucfirst($transition);
-                    $options['closeEasing'] = 'easeInOut'.ucfirst($transition);
-                }
+				if (in_array($transition, array('swing', 'linear')))
+				{
+					$options['openEasing'] = $transition;
+					$options['closeEasing'] = $transition;
+				}
+				else
+				{
+					$options['openEasing'] = 'easeInOut' . ucfirst($transition);
+					$options['closeEasing'] = 'easeInOut' . ucfirst($transition);
+				}
 
-                $options['openSpeed'] = $this->getParams()->get('speed', 200);
-                $options['closeSpeed'] = $this->getParams()->get('speed', 200);
-                $options['nextSpeed'] = $this->getParams()->get('speed', 200);
-                $options['prevSpeed'] = $this->getParams()->get('speed', 200);
+				$options['openSpeed'] = $this->params->get('speed', 200);
+				$options['closeSpeed'] = $this->params->get('speed', 200);
+				$options['nextSpeed'] = $this->params->get('speed', 200);
+				$options['prevSpeed'] = $this->params->get('speed', 200);
 
-            } else {
-                $options['openEffect'] = $transition;
-                $options['closeEffect'] = $transition;
-                $options['nextEffect'] = $transition;
-                $options['prevEffect'] = $transition;
-                $options['openSpeed'] = $this->getParams()->get('speed', 200);
-                $options['closeSpeed'] = $this->getParams()->get('speed', 200);
-                $options['nextSpeed'] = $this->getParams()->get('speed', 200);
-                $options['prevSpeed'] = $this->getParams()->get('speed', 200);
-            }
+			}
+			else
+			{
+				$options['openEffect'] = $transition;
+				$options['closeEffect'] = $transition;
+				$options['nextEffect'] = $transition;
+				$options['prevEffect'] = $transition;
+				$options['openSpeed'] = $this->params->get('speed', 200);
+				$options['closeSpeed'] = $this->params->get('speed', 200);
+				$options['nextSpeed'] = $this->params->get('speed', 200);
+				$options['prevSpeed'] = $this->params->get('speed', 200);
+			}
 
-            // Load the extra options
-            $extraOptions = trim($this->getParams()->get('options'));
-            if(!empty($extraOptions)) {
-                $extraOptions = explode("\n", $extraOptions);
-                foreach($extraOptions as $extraOption) {
-                    $extraOption = explode('=', $extraOption);
-                    if(!empty($extraOption[0]) && !empty($extraOption[1])) {
-                        $options[$extraOption[0]] = trim($extraOption[1]);
-                    }
-                }
-            }
+			// Load the extra options
+			$extraOptions = trim($this->params->get('options'));
 
-            // Sanitize the options
-            foreach($options as $name => $value) {
-                if(is_bool($value)) {
-                    $bool = ($value) ? "true" : "false";
-                    $options[$name] = "'$name':$bool";
-                } elseif(is_numeric($value)) {
-                    $options[$name] = "'$name':$value";
-                } elseif(empty($value)) {
-                    unset($options[$name]);
-                } else {
-                    if($value != 'true' && $value != 'false') $value = "'$value'";
-                    if($value == "'true'") $value = 'true';
-                    if($value == "'false'") $value = 'false';
-                    $options[$name] = "'$name':$value";
-                }
-            }
+			if (!empty($extraOptions))
+			{
+				$extraOptions = explode("\n", $extraOptions);
+				
+				foreach ($extraOptions as $extraOption)
+				{
+					$extraOption = explode('=', $extraOption);
 
-            // Helper options
-            $helpers = array();
+					if (!empty($extraOption[0]) && !empty($extraOption[1]))
+					{
+						$options[$extraOption[0]] = trim($extraOption[1]);
+					}
+				}
+			}
 
-            // Overlay helper
-            $closeClick = (bool)$this->getParams()->get('hide_on_click', true);
-            $closeClick = ($closeClick) ? 'true' : 'false';
-            $helpers[] = 'overlay: {closeClick:'.$closeClick.'}';
+			// Sanitize the options
+			foreach ($options as $name => $value)
+			{
+				if (is_bool($value))
+				{
+					$bool = ($value) ? "true" : "false";
+					$options[$name] = "'$name':$bool";
+				}
+				elseif (is_numeric($value))
+				{
+					$options[$name] = "'$name':$value";
+				}
+				elseif (empty($value))
+				{
+					unset($options[$name]);
+				}
+				else
+				{
+					if ($value != 'true' && $value != 'false')
+					{
+						$value = "'$value'";
+					}
+					elseif ($value == "'true'")
+					{
+						$value = 'true';
+					}
+					elseif ($value == "'false'")
+					{
+						$value = 'false';
+					}
+					
+					$options[$name] = "'$name':$value";
+				}
+			}
 
-            // Buttons helper
-            if($this->getParams()->get('load_buttons', 0) == 1) {
-                $options[] = 'closeBtn: false';
-                $helpers[] = 'buttons: {}';
-            }
+			// Helper options
+			$helpers = array();
 
-            // Media helper
-            if($this->getParams()->get('load_media', 0)) {
-                $helpers[] = 'media: {}';
-            }
+			// Overlay helper
+			$closeClick = (bool) $this->params->get('hide_on_click', true);
+			$closeClick = ($closeClick) ? 'true' : 'false';
+			$helpers[] = 'overlay: {closeClick:' . $closeClick . '}';
 
-            // Thumbs helper
-            if($this->getParams()->get('load_thumbs', 0)) {
-                $helpers[] = 'thumbs: {width:50, height:50}';
-            }
+			// Buttons helper
+			if ($this->params->get('load_buttons', 0) == 1)
+			{
+				$options[] = 'closeBtn: false';
+				$helpers[] = 'buttons: {}';
+			}
 
-            $options[] = 'helpers: {'.implode(', ', $helpers).'}';
+			// Media helper
+			if ($this->params->get('load_media', 0))
+			{
+				$helpers[] = 'media: {}';
+			}
 
-            // Get the script-output
-            $variables = array(
-                'elements' => $elements,
-                'options' => $options,
-            );
-            $script = $this->loadTemplate('script.php', $variables);
+			// Thumbs helper
+			if ($this->params->get('load_thumbs', 0))
+			{
+				$helpers[] = 'thumbs: {width:50, height:50}';
+			}
 
-            // Add the script-declaration
-            $document = JFactory::getDocument();
-            $document->addScriptDeclaration($script);
+			$options[] = 'helpers: {' . implode(', ', $helpers) . '}';
 
-        }
-    }
+			// Get the script-output
+			$variables = array('elements' => $elements, 'options' => $options,);
+			$script = $this->loadTemplate('script.php', $variables);
 
-    /**
-     * Load a template
-     *
-     * @access private
-     * @param null
-     * @return null
-     */
-    private function loadTemplate($file = null, $variables = true)
-    {
-        // Base file
-        $templateFile = JPATH_SITE.'/plugins/system/fancybox/tmpl/'.$file;
+			// Add the script-declaration
+			$document->addScriptDeclaration($script);
 
-        // Check for overrides
-        $template = JFactory::getApplication()->getTemplate();
-        if(file_exists(JPATH_SITE.'/templates/'.$template.'/html/plg_fancybox/'.$file)) {
-            $templateFile = JPATH_SITE.'/templates/'.$template.'/html/plg_fancybox/'.$file;
-        }
+		}
+	}
 
-        $output = null;
+	/**
+	 * Load a template
+	 *
+	 * @param string $file
+	 * @param array $variables
+	 */
+	private function loadTemplate($file = null, $variables = array())
+	{
+		// Base file
+		$templateFile = JPATH_SITE . '/plugins/system/fancybox/tmpl/' . $file;
 
-        // Include the variables here
-        if (!empty($variables)) {
-            foreach ($variables as $name => $value) {
-                $$name = $value;
-            }
-        }
+		// Check for overrides
+		$template = JFactory::getApplication()->getTemplate();
 
-        // Unset so as not to introduce into template scope
-        unset($file);
+		if (file_exists(JPATH_SITE . '/templates/' . $template . '/html/plg_fancybox/' . $file))
+		{
+			$templateFile = JPATH_SITE . '/templates/' . $template . '/html/plg_fancybox/' . $file;
+		}
 
-        // Never allow a 'this' property
-        if (isset($this->this)) {
-            unset($this->this);
-        }
+		$output = null;
 
-        // Unset variables
-        unset($variables);
-        unset($name);
-        unset($value);
+		// Include the variables here
+		if (!empty($variables))
+		{
+			foreach ($variables as $name => $value)
+			{
+				$$name = $value;
+			}
+		}
 
-        // Start capturing output into a buffer
-        ob_start();
-        include $templateFile;
+		// Unset so as not to introduce into template scope
+		unset($file);
 
-        // Done with the requested template; get the buffer and clear it.
-        $output = ob_get_contents();
-        ob_end_clean();
+		// Never allow a 'this' property
+		if (isset($this->this))
+		{
+			unset($this->this);
+		}
 
-        $output = str_replace("\n", "", $output);
-        return $output;
-    }
+		// Unset variables
+		unset($variables);
+		unset($name);
+		unset($value);
 
-    /**
-     * Load a script
-     *
-     * @access private
-     * @param null
-     * @return null
-     */
-    private function loadScript($file = null, $condition = true)
-    {
-        $condition = (bool)$condition;
-        if($condition == true) {
+		// Start capturing output into a buffer
+		ob_start();
+		include $templateFile;
 
-            if(preg_match('/^jquery-([0-9\.]+).min.js$/', $file, $match) && $this->getParams()->get('use_google_api', 0) == 1) {
+		// Done with the requested template; get the buffer and clear it.
+		$output = ob_get_contents();
+		ob_end_clean();
 
-                if(JURI::getInstance()->isSSL() == true) {
-                    $script = 'https://ajax.googleapis.com/ajax/libs/jquery/'.$match[1].'/jquery.min.js';
-                } else {
-                    $script = 'http://ajax.googleapis.com/ajax/libs/jquery/'.$match[1].'/jquery.min.js';
-                }
+		$output = str_replace("\n", "", $output);
 
-                JFactory::getDocument()->addScript($script);
-                return;
-            }
+		return $output;
+	}
 
-            $folder = 'media/plg_fancybox/js/';
+	/**
+	 * Load a script
+	 *
+	 * @param string $file
+	 * @param bool $condition
+	 */
+	private function loadScript($file = null, $condition = true)
+	{
+		$condition = (bool) $condition;
+		
+		if ($condition == true)
+		{
 
-            // Check for overrides
-            $template = JFactory::getApplication()->getTemplate();
-            if(file_exists(JPATH_SITE.'/templates/'.$template.'/html/plg_fancybox/js/'.$file)) {
-                $folder = 'templates/'.$template.'/html/plg_fancybox/js/';
-            }
+			if (preg_match('/^jquery-([0-9\.]+).min.js$/', $file, $match) && $this->params->get('use_google_api', 0) == 1)
+			{
 
-            JFactory::getDocument()->addScript($folder.$file);
-        }
-    }
+				if (JURI::getInstance()->isSSL() == true)
+				{
+					$script = 'https://ajax.googleapis.com/ajax/libs/jquery/' . $match[1] . '/jquery.min.js';
+				}
+				else
+				{
+					$script = 'http://ajax.googleapis.com/ajax/libs/jquery/' . $match[1] . '/jquery.min.js';
+				}
 
-    /**
-     * Load a stylesheet
-     *
-     * @access private
-     * @param null
-     * @return null
-     */
-    private function loadStylesheet($file = null, $condition = true)
-    {
-        $condition = (bool)$condition;
-        if($condition == true) {
+				JFactory::getDocument()->addScript($script);
 
-            $folder = 'media/plg_fancybox/css/';
+				return;
+			}
 
-            // Check for overrides
-            $template = JFactory::getApplication()->getTemplate();
-            if(file_exists(JPATH_SITE.'/templates/'.$template.'/html/plg_fancybox/css/'.$file)) {
-                $folder = 'templates/'.$template.'/html/plg_fancybox/css/';
-            }
+			$folder = 'media/plg_fancybox/js/';
 
-            JFactory::getDocument()->addStylesheet($folder.$file);
-        }
-    }
+			// Check for overrides
+			$template = JFactory::getApplication()->getTemplate();
+			
+			if (file_exists(JPATH_SITE . '/templates/' . $template . '/html/plg_fancybox/js/' . $file))
+			{
+				$folder = 'templates/' . $template . '/html/plg_fancybox/js/';
+			}
 
-    /**
-     * Load the parameters
-     *
-     * @access private
-     * @param null
-     * @return JParameter
-     */
-    private function getParams()
-    {
-        jimport('joomla.version');
-        $version = new JVersion();
-        if(version_compare($version->RELEASE, '1.5', 'eq')) {
-            $plugin = JPluginHelper::getPlugin('system', 'fancybox');
-            $params = new JParameter($plugin->params);
-            return $params;
-        } else {
-            return $this->params;
-        }
-    }
+			JFactory::getDocument()->addScript($folder . $file);
+		}
+	}
 
-    /**
-     * Get the HTML elements
-     *
-     * @access private
-     * @param null
-     * @return JParameter
-     */
-    private function getElements()
-    {
-        $elements = $this->getParams()->get('elements');
-        $elements = trim($elements);
-        $elements = explode(",", $elements);
-        if(!empty($elements)) {
-            foreach($elements as $index => $element) {
-                $element = trim($element);
-                $element = preg_replace('/([^a-zA-Z0-9\[\]\=\-\_\.\#\ ]+)/', '', $element);
-                if(empty($element)) {
-                    unset($elements[$index]);
-                } else {
-                    $elements[$index] = $element;
-                }
-            }
-        }
+	/**
+	 * Load a stylesheet
+	 *
+	 * @param string $file
+	 * @param bool $condition
+	 */
+	private function loadStylesheet($file = null, $condition = true)
+	{
+		$condition = (bool) $condition;
+		
+		if ($condition == true)
+		{
 
-        return $elements;
-    }
+			$folder = 'media/plg_fancybox/css/';
 
-    /**
-     * Simple method to load jQuery
-     *
-     * @access private
-     * @param null
-     * @return JParameter
-     */
-    private function jquery()
-    {
-        JLoader::import( 'joomla.version' );
-        $version = new JVersion();
-        if (version_compare( $version->RELEASE, '2.5', '<=')) {
-            if(JFactory::getApplication()->get('jquery') == false) {
-                $this->loadScript('jquery-1.9.0.min.js', $this->getParams()->get('load_jquery', 1));
-                JFactory::getApplication()->set('jquery', true);
-            }
-        } else {
-            JHtml::_('jquery.framework');
-        }
-    }
+			// Check for overrides
+			$template = JFactory::getApplication()->getTemplate();
+			
+			if (file_exists(JPATH_SITE . '/templates/' . $template . '/html/plg_fancybox/css/' . $file))
+			{
+				$folder = 'templates/' . $template . '/html/plg_fancybox/css/';
+			}
+
+			JFactory::getDocument()->addStylesheet($folder . $file);
+		}
+	}
+
+	/**
+	 * Get the HTML elements
+	 *
+	 * @return array
+	 */
+	private function getElements()
+	{
+		$elements = $this->params->get('elements');
+		$elements = trim($elements);
+		$elements = explode(",", $elements);
+		
+		if (!empty($elements))
+		{
+			foreach ($elements as $index => $element)
+			{
+				$element = trim($element);
+				$element = preg_replace('/([^a-zA-Z0-9\[\]\=\-\_\.\#\ ]+)/', '', $element);
+				if (empty($element))
+				{
+					unset($elements[$index]);
+				}
+				else
+				{
+					$elements[$index] = $element;
+				}
+			}
+		}
+
+		return $elements;
+	}
+
+	/**
+	 * Simple method to load jQuery
+	 */
+	private function jquery()
+	{
+		JLoader::import('joomla.version');
+		$version = new JVersion();
+		
+		if (version_compare($version->RELEASE, '2.5', '<='))
+		{
+			if (JFactory::getApplication()->get('jquery') == false)
+			{
+				$this->loadScript('jquery-1.9.0.min.js', $this->params->get('load_jquery', 1));
+				JFactory::getApplication()->set('jquery', true);
+			}
+		}
+		else
+		{
+			JHtml::_('jquery.framework');
+		}
+	}
 }
 
