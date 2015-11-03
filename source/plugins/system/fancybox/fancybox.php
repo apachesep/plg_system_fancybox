@@ -17,7 +17,7 @@ jimport('joomla.plugin.plugin');
 /**
  * Fancybox System Plugin
  */
-class plgSystemFancybox extends JPlugin
+class PlgSystemFancybox extends JPlugin
 {
 	/**
 	 * @var JApplication
